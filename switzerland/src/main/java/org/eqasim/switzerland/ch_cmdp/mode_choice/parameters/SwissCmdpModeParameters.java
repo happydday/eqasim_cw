@@ -12,6 +12,9 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaTravelTime_u_min = 0.0;
         public double travelTimeExponent = 1.0;
 
+        public double betaElevationUp_u = 0.0;
+        public double betaElevationDown_u = 0.0;
+
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
         public double betaRegion1_u = 0.0;
@@ -130,6 +133,9 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         parameters.bike.betaTravelTime_u_min= -0.8566142999818513;
         parameters.bike.betaUrbanDestination_u= -0.2517193568167992;
         parameters.bike.travelTimeExponent= 0.5618774653314881;
+        // NEW: elevation parameter (initial guess)
+        parameters.bike.betaElevationUp_u=-0.2;
+        parameters.bike.betaElevationDown_u=0.2;
         // car
         parameters.car.additionalAccessEgressWalkTime_min= 0.0;
         parameters.car.alpha_u= 4.068909453602562;

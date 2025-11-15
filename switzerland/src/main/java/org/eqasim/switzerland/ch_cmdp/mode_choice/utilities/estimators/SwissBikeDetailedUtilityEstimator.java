@@ -3,15 +3,20 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
+//import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
+//import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+
+//NEW: Import new Swiss bike classe
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissBikePredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissBikeVariables;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,13 +26,14 @@ import java.util.Map;
 public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
-    private final BikePredictor bikePredictor;
+    //private final BikePredictor bikePredictor;
+    private final SwissBikePredictor bikePredictor;
     private final VariablesWriter variablesWriter;
 
     @Inject
     public SwissBikeDetailedUtilityEstimator(SwissCmdpModeParameters parameters, SwissPersonPredictor personPredictor,
-                                             BikePredictor bikePredictor, VariablesWriter variablesWriter) {
-        super(parameters, personPredictor.delegate, bikePredictor);
+                                             SwissBikePredictor bikePredictor, VariablesWriter variablesWriter) {
+        super(parameters, personPredictor.delegate, bikePredictor.delegate);
 
         this.parameters = parameters;
         this.personPredictor = personPredictor;
@@ -39,7 +45,11 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return parameters.bike.alpha_u;
     }
 
-    protected double estimateTravelTimeUtility(BikeVariables variables) {
+    /*protected double estimateTravelTimeUtility(BikeVariables variables) {
+        return parameters.bike.betaTravelTime_u_min * Math.pow(variables.travelTime_min, parameters.bike.travelTimeExponent);
+    }*/
+
+    protected double estimateTravelTimeUtility(SwissBikeVariables variables) {
         return parameters.bike.betaTravelTime_u_min * Math.pow(variables.travelTime_min, parameters.bike.travelTimeExponent);
     }
 
@@ -93,7 +103,8 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
-        BikeVariables bikeVariables = bikePredictor.predictVariables(person, trip, elements);
+        //BikeVariables bikeVariables = bikePredictor.predictVariables(person, trip, elements);
+        SwissBikeVariables bikeVariables = bikePredictor.predictVariables(person, trip, elements);
 
         double utility = 0.0;
         utility += estimateConstantUtility();
@@ -117,7 +128,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return utility;
     }
 
-    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, BikeVariables bikevariable,
+    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, SwissBikeVariables bikevariable,
                                      SwissPersonVariables personVariables, double utility) {
         double departureTime = trip.getDepartureTime();
         int tripIndex = trip.getIndex();
