@@ -100,6 +100,18 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return 0.0;
     }
 
+    protected double estimateElevationUtility(SwissBikeVariables bikeVariables) {
+    double utility = 0.0;
+
+    // Uphill: reduces utility
+    utility += parameters.bike.betaElevationUp_u * bikeVariables.elevationUp_m;
+
+    // Downhill: increases utility (small positive)
+    utility += parameters.bike.betaElevationDown_u * bikeVariables.elevationDown_m;
+
+    return utility;
+}
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
@@ -120,6 +132,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         utility += estimatedLongDistanceUtility(trip);
 
         utility += estimateCantonUtility(person);
+        utility += estimateElevationUtility(bikeVariables);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, bikeVariables, personVariables, utility);
