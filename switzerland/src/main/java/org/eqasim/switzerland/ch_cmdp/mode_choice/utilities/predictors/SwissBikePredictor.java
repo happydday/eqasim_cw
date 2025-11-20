@@ -35,32 +35,23 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
         // 1. Get travel time from the original BikePredictor
         BikeVariables bikeVars = delegate.predict(person, trip, elements);
 
-        double elevationUp_m = 0.0;
-        double elevationDown_m = 0.0;
+        // Origin & destination coordinates (per trip)
+        var from = trip.getOriginActivity().getCoord();
+        var to = trip.getDestinationActivity().getCoord();
 
-        // 2. Compute elevation if the first element is a Leg
-        if (elements != null && !elements.isEmpty() && elements.get(0) instanceof Leg) {
-            Leg leg = (Leg) elements.get(0);
+        // Elevation difference (only positive = uphill)
+        double dz = to.getZ() - from.getZ();
+        if (dz < 0) dz = 0;
 
-            if (leg.getRoute() instanceof NetworkRoute) {
-                NetworkRoute networkRoute = (NetworkRoute) leg.getRoute();
+        // 2D Euclidean distance
+        double dx = to.getX() - from.getX();
+        double dy = to.getY() - from.getY();
+        double dist = Math.sqrt(dx * dx + dy * dy);
 
-                // Iterate over link IDs
-                for (Id<Link> linkId : networkRoute.getLinkIds()) {
-                    Link link = network.getLinks().get(linkId);
-                    if (link != null && link.getAttributes().getAttribute("elevationChange") != null) {
-                        double delta = (Double) link.getAttributes().getAttribute("elevationChange");
-                        if (delta > 0) {
-                            elevationUp_m += delta;
-                        } else {
-                            elevationDown_m += -delta;
-                        }
-                    }
-                }
-            }
-        }
+        // Compute slope (rise/run)
+        double slope = (dist > 0) ? dz / dist : 0.0;
 
         // 3. Wrap BikeVariables into SwissBikeVariables
-        return new SwissBikeVariables(bikeVars, elevationUp_m, elevationDown_m);
+        return new SwissBikeVariables(bikeVars, slope);
     }
 }

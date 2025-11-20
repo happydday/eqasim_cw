@@ -104,10 +104,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     double utility = 0.0;
 
     // Uphill: reduces utility
-    utility += parameters.bike.betaElevationUp_u * bikeVariables.elevationUp_m;
-
-    // Downhill: increases utility (small positive)
-    utility += parameters.bike.betaElevationDown_u * bikeVariables.elevationDown_m;
+    utility += parameters.bike.slope_u * bikeVariables.slope;
 
     return utility;
 }
