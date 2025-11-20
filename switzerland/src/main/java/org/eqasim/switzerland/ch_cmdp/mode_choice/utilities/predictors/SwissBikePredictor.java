@@ -8,6 +8,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissBikeVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -35,20 +36,24 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
         // 1. Get travel time from the original BikePredictor
         BikeVariables bikeVars = delegate.predict(person, trip, elements);
 
-        // Origin & destination coordinates (per trip)
-        var from = trip.getOriginActivity().getCoord();
-        var to = trip.getDestinationActivity().getCoord();
+        // 2. Get network nodes of origin and destination
+        Link fromLink = network.getLinks().get(trip.getOriginActivity().getLinkId());
+        Link toLink = network.getLinks().get(trip.getDestinationActivity().getLinkId());
 
-        // Elevation difference (only positive = uphill)
-        double dz = to.getZ() - from.getZ();
+        // Use the from-node of the origin link and from-node of the destination link
+        Coord fromNode = fromLink.getFromNode().getCoord();
+        Coord toNode = toLink.getFromNode().getCoord(); // or getToNode() if more appropriate
+
+        // 3. Compute elevation difference (only positive = uphill)
+        double dz = toNode.getZ() - fromNode.getZ();
         if (dz < 0) dz = 0;
 
-        // 2D Euclidean distance
-        double dx = to.getX() - from.getX();
-        double dy = to.getY() - from.getY();
-        double dist = Math.sqrt(dx * dx + dy * dy);
+        // 4. Compute 2D Euclidean distance
+        double dx = toNode.getX() - fromNode.getX();
+        double dy = toNode.getY() - fromNode.getY();
+        double dist = Math.sqrt(dx*dx + dy*dy);
 
-        // Compute slope (rise/run)
+        // 5. Compute slope (rise/run)
         double slope = (dist > 0) ? dz / dist : 0.0;
 
         // 3. Wrap BikeVariables into SwissBikeVariables
