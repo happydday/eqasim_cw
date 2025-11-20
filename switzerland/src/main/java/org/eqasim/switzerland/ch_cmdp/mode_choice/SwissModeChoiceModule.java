@@ -14,6 +14,7 @@ import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
 import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
@@ -32,12 +33,14 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParame
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.*;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.mode_availability.SwissDetailedModeAvailability;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.CarPassengerPredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissBikePredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.api.core.v01.network.Network;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,6 +123,12 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
 		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public SwissBikePredictor provideSwissBikePredictor(BikePredictor delegate, Network network) {
+		return new SwissBikePredictor(delegate, network);
 	}
 
 	@Provides
