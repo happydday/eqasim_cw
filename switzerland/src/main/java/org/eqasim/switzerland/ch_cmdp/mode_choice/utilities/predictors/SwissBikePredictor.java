@@ -32,31 +32,56 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 
     @Override
     protected SwissBikeVariables predict(Person person, DiscreteModeChoiceTrip trip,
-                                        List<? extends PlanElement> elements) {
-        // 1. Get travel time from the original BikePredictor
+                                     List<? extends PlanElement> elements) {
+
+        // 1) Base bike variables from delegate
         BikeVariables bikeVars = delegate.predict(person, trip, elements);
 
-        // 2. Get network nodes of origin and destination
-        Link fromLink = network.getLinks().get(trip.getOriginActivity().getLinkId());
-        Link toLink = network.getLinks().get(trip.getDestinationActivity().getLinkId());
+        // 2) Find the leg + route (if any)
+        Leg leg = elements.stream()
+                .filter(pe -> pe instanceof Leg)
+                .map(pe -> (Leg) pe)
+                .findFirst()
+                .orElse(null);
 
-        // Use the from-node of the origin link and from-node of the destination link
-        Coord fromNode = fromLink.getFromNode().getCoord();
-        Coord toNode = toLink.getFromNode().getCoord(); // or getToNode() if more appropriate
+        double totalUphillDZ = 0.0;
+        double uphillDistance = 0.0;
 
-        // 3. Compute elevation difference (only positive = uphill)
-        double dz = toNode.getZ() - fromNode.getZ();
-        if (dz < 0) dz = 0;
+        if (leg != null && leg.getRoute() instanceof NetworkRoute) {
+            NetworkRoute route = (NetworkRoute) leg.getRoute();
 
-        // 4. Compute 2D Euclidean distance
-        double dx = toNode.getX() - fromNode.getX();
-        double dy = toNode.getY() - fromNode.getY();
-        double dist = Math.sqrt(dx*dx + dy*dy);
+            // build the ordered list of links: start, intermediate, end
+            List<Id<Link>> allLinks = new java.util.ArrayList<>();
+            allLinks.add(route.getStartLinkId());
+            allLinks.addAll(route.getLinkIds());
+            allLinks.add(route.getEndLinkId());
 
-        // 5. Compute slope (rise/run)
-        double slope = (dist > 0) ? dz / dist : 0.0;
+            for (Id<Link> linkId : allLinks) {
+                Link link = network.getLinks().get(linkId);
+                if (link == null) {
+                    // defensive: missing link in network
+                    continue;
+                }
 
-        // 3. Wrap BikeVariables into SwissBikeVariables
+                Coord cFrom = link.getFromNode().getCoord();
+                Coord cTo   = link.getToNode().getCoord();
+
+                // If z is not set (== 0 or NaN), you may want to handle that here.
+                double dz = cTo.getZ() - cFrom.getZ();
+                double len = link.getLength();
+
+                if (dz > 0.0) {
+                    totalUphillDZ += dz;
+                    uphillDistance += len;
+                }
+            }
+        }
+
+        // 3) uphill-only mean slope
+        double slope = (uphillDistance > 0.0) ? (totalUphillDZ / uphillDistance) : 0.0;
+
+        // 4) Return SwissBikeVariables (adjust constructor if you extended it)
         return new SwissBikeVariables(bikeVars, slope);
     }
+
 }
