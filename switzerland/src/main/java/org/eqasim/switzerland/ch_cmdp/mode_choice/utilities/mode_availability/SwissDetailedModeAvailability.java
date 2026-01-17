@@ -49,6 +49,21 @@ public class SwissDetailedModeAvailability implements ModeAvailability {
             modes.add(TransportMode.bike);
         }
 
+        
+        // Check ebike availability 08.12.2025 15h00
+        Object hasEbikeAttr = person.getAttributes().getAttribute("hasEbike");
+        boolean hasEbike = false;
+
+        if (hasEbikeAttr != null) {
+            // works whether attribute is Boolean or String
+            hasEbike = Boolean.parseBoolean(hasEbikeAttr.toString());
+        }
+
+        if (hasEbike) {
+            modes.add("ebike");   // important: use plain string, NOT TransportMode.ebike
+        }
+
+
         // Add special mode "outside" if applicable
         Boolean isOutside = (Boolean) person.getAttributes().getAttribute("outside");
 
